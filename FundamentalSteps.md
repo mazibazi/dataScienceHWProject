@@ -42,6 +42,12 @@ In this step, we have to go deep in the database, at first we have to deal with 
 [image_ref_a32ff4ads2]: https://dpbnri2zg3lc2.cloudfront.net/en/wp-content/uploads/old-blog-uploads/the-data-analysis-process-1.jpg
 [image_ref_a32ff4ads]: https://www.datascience-pm.com/wp-content/uploads/2021/02/CRISP-DM.png
 
-## Dealing with missing values
+## Data Understanding Steps
 
-for this purpose at first we have to recognize how many data were missed and why they missed!! <br>
+**Step 1**: relevant  data?<br />
+**Step 2**: data sources?<br/> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; *All detail of data and what are they mean in R I can see S06 or Page 19 notebook* ...<br/>
+**Step 3**: Data Understanding from Statistical Perspective<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; In R I can see S06 [Statistical Perspective in R](https://github.com/mazibazi/FundamentalSteps/blob/40df868c8d04699b854850ceff8927bb87528487/S06/S06.R#L99) Page 19 notebook<br>
+**Step 4**: Data Manipulation <br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; for this I can see Page 21 notebook or S07 [Data Manipulation in R](https://github.com/mazibazi/FundamentalSteps/blob/40df868c8d04699b854850ceff8927bb87528487/S07/S07.R#L11)
