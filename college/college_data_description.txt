@@ -23,11 +23,11 @@ Enroll
 
     Number of new students enrolled
 
-Top10perc
+Top10perc ---> of high school
 
     Pct. new students from top 10% of H.S. class
 
-Top25perc
+Top25perc ---> of high school
 
     Pct. new students from top 25% of H.S. class
 
@@ -39,11 +39,11 @@ P.Undergrad
 
     Number of parttime undergraduates
 
-Outstate
+Outstate 
 
     Out-of-state tuition
 
-Room.Board
+Room.Board ---> Room & board is defined as on-campus college housing that is accompanied by a meal plan. It is a convenient arrangement that allows students to live on campus with easy, accountable access to food.
 
     Room and board costs
 
@@ -66,7 +66,7 @@ S.F.Ratio
 
     Student/faculty ratio
 
-perc.alumni
+perc.alumni --> they like their univeristy 
 
     Pct. alumni who donate
 
