@@ -277,20 +277,26 @@ box_results <- data.frame(box_results$x, box_results$y)
 lambda <- box_results[which(box_results$box_results.y == max(box_results$box_results.y)), 1]
 lambda  
 
-#New transformation
+#New transformation(it Does not work) -----
 
-train2$newApps <- ((train2$Apps) ^ lambda - 1) /lambda
-mTransformAll <-lm(newApps ~ Private+ Accept +Top10perc  + Enroll + F.Undergrad + P.Undergrad 
-                   +Outstate + Room.Board + PhD  + Expend + Grad.Rate, data = train2) # R-squared:  0.9266
-summary(mTransformAll)
-plot(mTransformAll) # 
-car :: vif(mTransformAll)  # F.Undergrad and Enroll
+#train2$newApps <- ((train2$Apps) ^ lambda - 1) /lambda
+#mTransformAll <-lm(newApps ~ Private+ Accept +Top10perc  + Enroll + F.Undergrad + P.Undergrad 
+#                   +Outstate + Room.Board + PhD  + Expend + Grad.Rate, data = train2) # R-squared:  0.9266
+#summary(mTransformAll)
+#plot(mTransformAll) # 
+#car :: vif(mTransformAll)  # F.Undergrad and Enroll
 
-train2 <- subset (train2, select = -newApps) 
+#train2 <- subset (train2, select = -newApps) 
+#train2$newApps <-  log(train2$Apps)
+#mAllRemovedNormal <-lm(newApps ~ . -Apps,data= train2) # R-squared:   0.7815
+#summary(mAllRemovedNormal)
+
+#plot(mAllRemovedNormal)
+
 # the method does not work, and I prefer to work with normal,
 #                                      and it does not have any improvements 
 # But still we have some issues with Multidisciplinary, ... 
-
+# and The R2 was decreased to, therfore, I prefer to avoid normalization in this step 
 # Model 3 Using the Best Subset Selection Methods ----------
 
 dim(train)
@@ -710,7 +716,7 @@ abline(a = 0, b = 1, col = "red", lwd = 2)
 ##                                   of train 1 model accuracy is decreased
 
 
-## Model 5-5 Bagging
+## Model 5-5 Bagging ------
 set.seed(1234)
 bagging_1 <- randomForest(Apps ~ . , mtry = ncol(train) - 2, ntree = 500, data = train)
 bagging_1
@@ -754,7 +760,7 @@ abline(a = 0, b = 1, col = "red", lwd = 2)
 
 
 
-## Model 5- random Forest
+## Model 5- random Forest------
 rf_1 <- randomForest(Apps ~ . , data = train, 
                      mtry = 6, ntree = 500, nodesize = 5, importance = TRUE)
 ## mtry	
@@ -844,8 +850,8 @@ plot(test$Apps, pred_rf, main = 'RandomForest2',
 abline(a = 0, b = 1, col = "red", lwd = 2)
 
 
-
-
+#Save the results--------------------------------
+save(data, dataRaw, train, train2, test, models_comp, file = "case1_testPreproces.R")
 
 
 
