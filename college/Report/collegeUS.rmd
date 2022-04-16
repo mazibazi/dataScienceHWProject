@@ -1,0 +1,1106 @@
+---
+title: "college Data Science Project"
+author: "Maziyar Bahri"
+date: "12/7/2021"
+output:
+  html_document: default
+  word_document: default
+  pdf_document: default
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Load Package to Library, These Libraries we need for our deploying ML
+
+```{r}
+library("moments") 
+library("ggplot2")
+library("MASS")    
+library("leaps")    
+library("corrplot") 
+library("carData")
+library("car")
+library("corrplot")
+library("glmnet")
+library("randomForest")
+library("leaps")
+library("rpart")          
+library("rpart.plot")
+library("gbm")
+library("xgboost")
+library("Metrics")
+```
+Loading dataset from
+```{r}
+dataRaw<- read.csv("../college.csv", header = TRUE)
+```
+
+# Data Science Project College
+
+# Business understanding
+
+## 1. What is the main motivation of College data set?<br>
+
+This data set had been published by U.S. News and World Report in September of 1995. This Data set has helped students and parents to narrow their choices and choose a decent college. This data set is included some features of the college (Private, Location, number of facilities, Rate of a student, acceptance rate, grade and etc. However, The Book cost and other potential expenses are mentioned in this data set, which gives a wide point of view to us for considering the expense in this study as one of an important element.
+
+## 2&3.What might the output of this project be used?Who might be interested in the results of this project? Why?<br>
+
+This project has been assumed to predict the number of applications received. Then with an estimation of application volume, we could predict each college how many applications would be received each year. Then students are able to use this project to find a popular college or high-demand schools. on the other side, colleges are able to use this model in another way, college could use this model to find out other rival colleges how many applicants they have, and compare themself with other colleges, or they can adjust their system to rate of applications, for instance, if they are receiving a lot of application they can hire more recruiter for checking the applicants or if they are not high demanded college they can take another measurement to receive more.
+
+# Data Description
+
+## 1. Where is the data obtained and how is it collected?<br>
+
+This data set was taken from the StatLib library which is maintained at Carnegie Mellon University. The dataset was used in the ASA Statistical Graphics Section's 1995 Data Analysis Exposition. <https://rdrr.io/cran/ISLR/man/College.html>
+
+## 2. What do each of the variables measure?
+The the column of data are: 
+
+```{r}
+print(colnames(dataRaw))
+```
+College data frame with 777 observations on the following 18 variables.
+
+
+**Private** -- This feature shows the college is private or Not.<br> **Apps** -- The number of applications that were received by the college.<br> **Accept** -- The number of **applications accepted** by the college.<br> **Enroll** -- The number of new students were enrolled in that college in 1995.<br/> **Top10perc** -- The percent of new students who had been from the top **10%** of **previous High school** class.<br/> **Top25perc** -- The percent of new students who had been from the top **25%** of **previous High school** class.<br/> **F.Undergrad** -- Number of **full-time undergraduates** who had studied at those colleges.<br/> **P.Undergrad** -- Number of **part-time undergraduates** who had studied at those colleges.<br/> **Outstate** -- Out-of-state tuition refers to the amount of money the student from **another state** wants to attend at another college from another state. <br/> **Room.Board** -- Lodging and food **expenses** for students. <br/> **Books** -- Estimated **book costs** that students had to pay. <br/> **Personal** -- Estimated **personal spending** for student daily life. <br/> **PhD** -- Percent of faculty who had **Ph.D.'s.** <br/> **Terminal** -- Percent of faculty who had **terminal** degree. <br/> **S.F.Ratio** -- Ratio of Student per faculty. <br/> **perc.alumni** -- Percent of alumni who **donated money** after their graduation, this key shows that college was useful for students who are already graduated. <br/> **Expend** -- Instructional expenditure per student which college has to allocate for student. <br /> **Grad.Rate** -- Graduation rate for each college. <br/>
+
+## 3. Is there ambiguity in the definitions of the data?<br>
+
+**F.Undergrad** and **P.Underground** are measured same rate, and they were overwritten each other. <br> **Top10perc** and **Top25perc** were overwritten each other. <br> **Terminal** and **PhD** have a save issue, a person who has Ph.D., is measured as Terminal degree or not? this is an important <br>
+
+## 4. Is there an error in measuring variables or recording data?<br>
+
+I did not find any issues.
+
+## 5. What other variables, could help solve the problem?<br>
+
+Founded date can be useful because sometime the rate for applicants, would be more than a new college.
+
+## 6. What kind of variables are there (Categorical - Numerical)?
+
+College.Name, Private are Categorical and rest of feature are Numerical, However in the following I would be removed college.Name for reducing the Biased risk. Also, Private is Boolean type, which I changed it with Factor
+
+```{r}
+str(dataRaw)
+```
+In here we want to remove **college Name** and change **Private** to Factor:
+```{r}
+#Remove College.Name
+length(unique(dataRaw$College.Name))
+data <- dataRaw[,-1]
+
+##Uni variate Profiling
+length(unique(data$Private))
+unique(data$Private)
+```
+In above is shown that Private is reporated as Yes or No. 
+## 7.What is the statistical summary of variables?
+Here, we can see better summary of data with quartile, mean, median And number of reports for private school
+```{r}
+data$Private <- factor(data$Private)
+summary(data)
+```
+
+# Data preprocesing
+
+## 1,2,3 and 4. Data Manipulation and Data cleaning
+
+The college name has already been removed, Because the name of the college could be affected by the decision, for instance, if sometimes name of a specific college could change students point of view students point of view
+
+```{r}
+data <- dataRaw[,-1]
+```
+
+# Data Visualization
+
+## Categorical variables
+
+we want to check Categorical data, and here we can see, they are **not distributed** same <br>
+
+```{r}
+#Categorical variables    
+table(data$Private)     
+```
+<br>
+we have 212 **non-private** School and 565 **private** school<br>
+
+## Numerical variables
+**Note:** In here you can see the distribution of Numerical varible.<br>
+```{r}
+#distribution
+par(mfrow = c(3, 3))  # 4 rows and 4 columns
+#Continuous variables distribution
+for (i in 3:18) {
+  hist(data[, i], xlab = "",  probability = T, breaks = 15, 
+       main = paste("Histogram of", names(data)[i]))
+  lines(density(data[,i]), col = "red")
+}
+```
+<br>
+**QQ Plot** shows data are distributed Normal distribution or they are not Normal<br>
+```{r}
+par(mfrow = c(3, 3))
+for (i in 3:18) {
+  qqnorm(data[,i], main = paste("QQ plot of", names(data)[i]), pch = 20)
+  qqline(data[,i], col = "red")
+}
+```
+<br>
+**Note:** From **QQ plot** we can see data are **not distributed Normal** and we may have some issues in developing models.<br>
+
+Scatter Plot shows data are distributed liner or not <br>
+```{r}
+#Scatter Plot
+par(mfrow = c(2, 2))  # 2 rows and 2 columns
+for (i in 3:18) {
+  plot(data[,i], data$Apps, xlab = "", main = paste("Apps vs.", names(data)[i]))
+}
+```
+
+**Note:** From this plot is is obvious **Book** vs **Apps** does not have any liner relation. <br> 
+<br>  
+
+A visualization of a **correlation matrix**, it is illustrated some features are correlated to each other<br>  
+```{r}
+cor_table <- round(cor(data[, c(2: 18)]), 2)
+corrplot(cor_table)
+```
+<br>
+We can see **OutSate** and **Expend** are having a great relation with each other. Also,**Expend** vs **Top10perc**, **Enrol** vs **F.Undergraduate** and **Enroll** vs **Accept**. So, without a doubt we will face **multicollinearity**.<br>
+
+## Identify Outliers  
+```{r}
+boxplot(data$Apps, main = "Number of applications received")
+```
+<br>
+**Note:** We can see we have some outliers in **Apps** <br>
+
+```{r}
+
+tukey_ul <- quantile(data$Apps, probs = 0.75) + 1.5 * IQR(data$Apps)
+tukey_ul 
+sum(data$Apps > tukey_ul)
+sum(data$Apps > tukey_ul)/nrow(data) * 100
+```
+**Note:** It shows **9%** of data are located in **outliers**, and **70** of our observation are **outliers**. <br>
+
+
+# Developing Machine learning 
+Because we do not have enough data to study I assume **80-20** for **train** and **test**.<br>
+
+```{r}
+set.seed(1234)
+train_cases <- sample(1:nrow(data), nrow(data) * 0.8) 
+train <- data[train_cases,]
+test  <- data[- train_cases,]
+```
+
+So, **621** observation are selected for train and **156** for test.<br>
+
+With the following method I check data are distributed appropriately and they are balance.<br>
+This part I added for optional and for saving more space in Markdown **I did not Run** it Again. 
+
+```{r}
+#for (i in 2:18){
+#  print(colnames(train[i]))
+#  print("***** train *****")
+#  print(summary(train[, i]))
+#  print("***** test ***** ")
+#  print(summary(test[, i]))
+#  print("----------------------")
+#}
+```
+<br>
+Looks fine now data are separated balance in Test and train. <br>
+
+
+## Linear Regression
+I developed some single regression, to obtain a general knowledge on the dataset, for having better Markdown I remove them<br>
+
+### Model 1 Simple Regression
+#### Model 1-1 All feature
+This is first attempt and in here we are going to have general idea about data, and assign regression on all.
+
+```{r}
+mAll <-lm(Apps ~., data = train) # R-squared:  0.9301
+summary(mAll)
+plot(mAll)
+```
+<br>
+We can see data are not Normal, and Residual plot has some relation .... <br>
+But we can see observation of 484 is located in cook distance, so we should do more resach on this dataset. 
+
+```{r}
+car :: vif(mAll)
+```
+**Note**: F.Undergrad and Enroll have Multicollinearity, because they are more than 10 <br>
+
+**Note**: I have bad feeling on observation 484, 71 nad 251 so we are going to study them deeply. At first we should avoid to remove them so I will go **Google**, these schools' name:
+
+```{r}
+dataRaw[484,]
+train[71,]
+train[251,]
+```
+<br>
+I think row number 484 has an issue, so I have checked the name of university [Rutgers at New Brunswick](https://www.usnews.com/best-colleges/rutgers-new-brunswick-6964)<br>
+<br>
+This university has lower **Accept**, **Top10perc**, **Top25perc**, **F.Undergrad**, **perc.alumni**, **Grad.Rate**<br>
+so we want to remove these university based on our reseach they would not be normal<br>
+
+```{r}
+train2 <- train[- which(rownames(train) %in% c(484, 251, 71, 694)), ]
+```
+<br>
+Based on my assumption, I will work with **train2** Since now. for rest of works.<br>
+**Note**: I have to mention that, in my draft file I developed ML for **train1** and **train2**, and I have found that **train2** works better on test and train. Because of lacking space in Markdown I did not mention them here. <br>
+
+```{r}
+mAllRemoved <-lm(Apps ~., data = train2) 
+summary(mAllRemoved)
+plot(mAllRemoved)
+```
+<br>
+**Note**: R-squared and Adjusted R-squared are improved and they are not that much different from each other, and from cook distance is fine. But we have Heteroscedasticity issue, we are not able to trust T test anymore.<br>
+
+#### Prediction Model 1-1 All feature
+```{r}
+pred_mAll <- predict(mAllRemoved, test)
+
+#Absolute error mean, median, sd, max, min
+abs_err_lm <- abs(pred_mAll - test$Apps)
+
+#Create a dataframe to save prediction results on test data set
+models_comp <- data.frame("RMSE"   =rmse(test$Apps, pred_mAll),
+                          "Mean of AbsErrors"   = mean(abs_err_lm),
+                          "Median of AbsErrors" = median(abs_err_lm),
+                          "SD of AbsErrors"  = sd(abs_err_lm),
+                          "IQR of AbsErrors" = IQR(abs_err_lm),
+                          "Min of AbsErrors" = min(abs_err_lm),
+                          "Max of AbsErrors" = max(abs_err_lm), 
+                          row.names = 'LM_AllFeature_model1')
+#Actual vs. Predicted
+plot(test$Apps, pred_mAll, main = 'LM_AllFeature_model1',
+     xlim = c(0, 2000), ylim = c(0, 2000),
+     xlab = "Actual", ylab = "Prediction")
+abline(a = 0, b = 1, col = "red", lwd = 2) 
+```
+
+#### Model 1-2 based on T test
+```{r}
+mTtest <-lm(Apps  ~ Private+ Accept +Top10perc  + Enroll + F.Undergrad + P.Undergrad 
+   +Outstate + Room.Board + PhD  + Expend + Grad.Rate, data = train2)
+summary(mTtest)
+plot(mTtest)
+```
+
+#### Prediction Model 1-2 based on T test
+
+Right now we are developing models which has less feature and same accuracy 
+```{r}
+pred_mTtest <- predict(mTtest, test)
+#Absolute error mean, median, sd, max, min
+abs_err_lm <- abs(pred_mTtest - test$Apps)
+
+#Create a dataframe to save prediction results on test data set
+models_comp <- rbind(models_comp, 'LM_Ttest_model2' = c(rmse(test$Apps, pred_mTtest), 
+                                                 mean(abs_err_lm),
+                                                 median(abs_err_lm),
+                                                 sd(abs_err_lm),
+                                                 IQR(abs_err_lm),
+                                                 range(abs_err_lm)))
+
+#Actual vs. Predicted
+plot(test$Apps, pred_mTtest, main = 'LM_Ttest_model2',
+     xlim = c(0, 2000), ylim = c(0, 2000),
+     xlab = "Actual", ylab = "Prediction")
+abline(a = 0, b = 1, col = "red", lwd = 2) 
+```
+
+**Note**: The accuracy of **model 1-1** is same as **model 1-2**. And we have used less feature. However still this model has some issue (Multidisciplinary and Heteroscedasticity)<br>
+But my personal idea is **model1-2**, because we are using less feature and same accuracy. 
+
+### Model 2 
+#### Model 2-1 Best Subset Selection
+
+```{r}
+bestsub <- regsubsets(Apps ~ . , nvmax = 17, data = train2, method = "exhaustive")
+summary(bestsub)$rsq
+```
+
+Now I am going to take a look at **Adjusted_R**, and **CP**
+
+```{r}
+#Plot Adjusted R-squared  --> 13
+plot(summary(bestsub)$adjr2,
+     type = "b",
+     xlab = "# of Variables", 
+     ylab = "AdjR2", 
+     xaxt = 'n',
+     xlim = c(1, 18)); grid()
+axis(1, at = 1: 18, labels = 1: 18)
+
+points(which.max(summary(bestsub)$adjr2), 
+       summary(bestsub)$adjr2[which.max(summary(bestsub)$adjr2)],
+       col = "red", cex = 2, pch = 20)
+```
+
+```{r}
+#Plot Cp --> 13
+plot(summary(bestsub)$cp,
+     type = "b",
+     xlab = "# of Variables", 
+     ylab = "Cp", 
+     xaxt = 'n',
+     xlim = c(1, 19)); grid()
+axis(1, at = 1: 19, labels = 1: 19)
+points(which.min(summary(bestsub)$cp), 
+       summary(bestsub)$cp[which.min(summary(bestsub)$cp)],
+       col = "red", cex = 2, pch = 20)
+```
+
+**Note**: **BIC** are **CP** are shewing 13 variable should be selected.<br> 
+the **13th** model would be selected for the best(Based on previous calculation). 
+So we would select out parameters from these feature, for this criteria we will use Coefficients function: 
+
+```{r}
+#Coefficients of the best model
+coef(bestsub, 13)
+```
+
+We will continue this model with **Adjusted_R** assumption. 
+
+```{r}
+bestsub2_Adj <- lm(Apps  ~ Accept + Top10perc + Top25perc+ Private + Enroll +
+                    Outstate + Room.Board + PhD  + Expend + Grad.Rate +
+                    F.Undergrad + P.Undergrad + S.F.Ratio + perc.alumni, data = train2)
+summary(bestsub2_Adj) 
+
+```
+**Note**: So, we can see R-squared and Adjusted R-squared are close to each other and T and F test are looking good. 
+
+#### PredictionModel 2-1 Best Subset Selection
+```{r}
+pred_bestsubAdj  <- predict(bestsub2_Adj, test)    
+
+#Absolute error mean, median, sd, max, min
+abs_err_bestsub <- abs(pred_bestsubAdj  - test$Apps )
+abs_err_lm <- abs(pred_mTtest - test$Apps)
+models_comp <- rbind(models_comp, 'BestSubset_RAdj_model3' = c(rmse(test$Apps, pred_bestsubAdj), 
+                                                        mean(abs_err_bestsub),
+                                                        median(abs_err_bestsub),
+                                                        sd(abs_err_bestsub),
+                                                        IQR(abs_err_bestsub),
+                                                        range(abs_err_bestsub)))
+
+#Actual vs. Predicted
+plot(test$Apps, pred_bestsubAdj, main = 'BestSubset_RAdj_model3',
+     xlim = c(0, 2000), ylim = c(0, 2000),
+     xlab = "Actual", ylab = "Prediction")
+abline(a = 0, b = 1, col = "red", lwd = 2)
+```
+
+In here we can see model has improved a little
+
+#### Model 2-2 Forward Selection and backward
+```{r}
+fwd_1 <- regsubsets(Apps ~ . , nvmax = 17, data = train2, method = "forward")
+
+
+which.max(summary(fwd_1)$adjr2)
+which.min(summary(fwd_1)$cp)
+which.min(summary(fwd_1)$bic)
+
+
+bwd_1 <- regsubsets(Apps ~ . , nvmax = 17, data = train2, method = "backward")
+
+
+which.max(summary(bwd_1)$adjr2)
+which.min(summary(bwd_1)$cp)
+which.min(summary(bwd_1)$bic)
+
+```
+**Note**: in the general **adjR** and **Cp** for backward and forward told us to use 13 variable on other hand **bic** told us 7 for forward and 9 for backward. But I will go for using **Cross Validation** incited of them. <br>
+
+#### Model 2-3 Using Cross validation
+As mentioned above, the recommended model from **backward**, **forward** would be same as **Bestsubst**. However, they are faster than **Bestsubset**. So, we want to use **CV** methods. And in this method we will choose 11 variable.  
+
+```{r}
+k <- 10
+set.seed(123)
+folds <- sample(1: k, nrow(train), rep = TRUE)
+cv_errors <- matrix(NA, k, 17, dimnames = list(NULL , paste(1: 17)))
+
+predict_regsubsets <- function(object, newdata, id) {
+  reg_formula <- as.formula(object$call[[2]])
+  mat    <- model.matrix(reg_formula, newdata)
+  coef_i <- coef(object, id = id)
+  mat[, names(coef_i)] %*% coef_i
+}
+
+set.seed(1234)
+
+for(i in 1: 17){
+  for(j in 1: k){
+    best_fit <- regsubsets(Apps ~ . , data = train2[folds != j,], nvmax = 17, method = "exhaustive")
+    pred <- predict_regsubsets(best_fit, newdata = train[folds == j,], id = i)
+    cv_errors[j, i] <- mean((train$Apps[folds == j] - pred) ^ 2)
+  }
+}
+mean_cv_erros <- apply(cv_errors, 2, mean)
+
+plot(mean_cv_erros, type = "b")
+
+```
+
+Selected Variable:  
+```{r}
+coef(bestsub, which.min(mean_cv_erros))
+```
+
+
+```{r}
+bestsub_cv <- lm(Apps ~ Private + Accept + Enroll + Top10perc +
+                   F.Undergrad + Outstate + Room.Board + PhD +
+                   perc.alumni + Expend + Grad.Rate, data = train2)
+summary(bestsub_cv) 
+```
+
+**Note**: R-squared has not changed a lot, but this model we do not have those issue which we had it before.
+
+#### Prediction Model 2-3 Using Cross validation
+
+```{r}
+
+pred_bestsub_cv <- predict(bestsub_cv, test)
+
+##Absolute error mean, median, sd, max, min
+abs_err_bestsub_cv <- abs(pred_bestsub_cv - test$Apps)
+models_comp <- rbind(models_comp, 'BestSubset_CV_model4' = c(rmse(test$Apps, pred_bestsub_cv), 
+                                                      mean(abs_err_bestsub_cv),
+                                                      median(abs_err_bestsub_cv),
+                                                      sd(abs_err_bestsub_cv),
+                                                      IQR(abs_err_bestsub_cv),
+                                                      range(abs_err_bestsub_cv)))
+
+## Actual vs. Predicted
+plot(test$Apps, pred_bestsub_cv, main = 'BestSubset_CV_model4',
+     xlim = c(0, 2000), ylim = c(0, 2000),
+     xlab = "Actual", ylab = "Prediction")
+abline(a = 0, b = 1, col = "red", lwd = 2)
+```
+
+
+### Model 3 Using Regularization
+
+Here were are going to use Regularization (Ridge Regression and LASSO)
+
+#### Model 3-1 Ridge Regression
+
+```{r}
+x <- model.matrix(Apps ~ . , data = train2)[, -1] #remove intercept
+y <- train2$Apps
+set.seed(1234)
+lambda_grid <- 10 ^ seq(5, -2, length = 100) # we can change more grid and each time focus more to find better
+ridge_cv    <- cv.glmnet(x, y, alpha = 0, lambda = lambda_grid, nfolds = 10)
+
+## Coefficients of regression w/ best_lambda, Do not need to assign grid because we know the best lambda 
+ridgereg <- glmnet(x, y, alpha = 0, lambda = ridge_cv$lambda.min, standardize = TRUE, intercept = TRUE)
+coef(ridgereg)
+
+```
+
+#### Prediction Model 3-1 Ridge Regression
+
+```{r}
+x_test <- model.matrix(Apps ~ . , data = test)[, -1]#remove intercept
+pred_ridgereg <- predict(ridgereg, s = ridge_cv$lambda.min, newx = x_test)
+
+#Absolute error mean, median, sd, max, min-------
+abs_err_ridgereg <- abs(pred_ridgereg - test$Apps)
+models_comp <- rbind(models_comp, "RidgeReg_model5" = c(rmse(test$Apps, pred_ridgereg), 
+                                                 mean(abs_err_ridgereg),
+                                                 median(abs_err_ridgereg),
+                                                 sd(abs_err_ridgereg),
+                                                 IQR(abs_err_ridgereg),
+                                                 range(abs_err_ridgereg)))
+
+
+#Actual vs. Predicted
+plot(test$Apps, pred_ridgereg, main = 'RidgeReg_model5',
+     xlim = c(0, 2000), ylim = c(0, 2000),
+     xlab = "Actual", ylab = "Prediction")
+
+abline(a = 0, b = 1, col = "red", lwd = 2)
+
+```
+
+#### Model 3-2 LASSO
+
+```{r}
+## Cross validation to choose the best model
+lasso_cv    <- cv.glmnet(x, y, alpha = 1, lambda = lambda_grid, nfolds = 10)
+
+## Coefficients of regression w/ best_lambda
+lassoreg_2 <- glmnet(x, y, alpha = 1, lambda = lasso_cv$lambda.min, standardize = TRUE, intercept = TRUE)
+coef(lassoreg_2)
+```
+
+#### Prediction Model 3-2 LASSO
+```{r}
+x_test <- model.matrix(Apps ~ . , data = test)[, -1]#remove intercept
+pred_lassoreg <- predict(lassoreg_2, s = lasso_cv$lambda.min, newx = x_test)
+
+abs_err_lassoreg <- abs(pred_lassoreg - test$Apps)
+models_comp <- rbind(models_comp, "LASSOReg_model6" = c(rmse(test$Apps, pred_lassoreg), 
+                                                 mean(abs_err_lassoreg),
+                                                 median(abs_err_lassoreg),
+                                                 sd(abs_err_lassoreg),
+                                                 IQR(abs_err_lassoreg),
+                                                 range(abs_err_lassoreg)))
+
+#Actual vs. Predicted
+plot(test$Apps, pred_lassoreg, main = 'LASSOReg_model6',
+     xlim = c(0, 2000), ylim = c(0, 2000),
+     xlab = "Actual", ylab = "Prediction")
+abline(a = 0, b = 1, col = "red", lwd = 2)
+```
+
+
+```{r}
+knitr::kable(
+  models_comp , caption = 'Comparing models.'
+)
+```
+
+**Note:** we can see most of error still are staying in the same range. But **BestSubset_RAdj_model3** has better condition than other, However, we have to try non-linear models and Trees. 
+
+
+## Decision Tree Structures
+
+In here at first some **simple trees** are developed and we can use RF for feature selection. Then, I use **GBRegression** and **XGB** models. 
+
+### Model 3 Simple Decision Tree
+
+#### Model 3-1 selected feature
+we see the **Accept**, **Top 10** and **F.Undergraduate** are playing an important role, I choose these feature from **RF** and **LASSO**.<br>
+
+**Note:** Plot the tree, **CP** plays an important role and we have to measure it good. and find it the best one. So, we are going to prune it. I have brought some of those codes in the following: 
+
+```{r}
+tree_1 <- rpart(Apps ~ Private + Accept + Enroll + Top10perc + F.Undergrad
+                + Outstate + Room.Board + Expend  + PhD, data = train2, 
+                control = list(cp = 0.01, maxdepth = 10, minbucket = 20))
+
+tree_2 <- rpart(Apps ~ Private + Accept + Enroll + Top10perc + F.Undergrad
+                + Outstate + Room.Board + Expend  + PhD, data = train2, 
+                control = list(cp = 0.001, maxdepth = 20, minbucket = 20))
+
+tree_2P <- prune.rpart(tree_2, 
+                      cp = tree_2$cptable[which.min(tree_2$cptable[,"xerror"])])
+
+prp(tree_2P)
+```
+
+
+#### Model 3-2 All feature
+
+In here, I will make Tree on all feature and prune it. 
+
+```{r}
+tree_3 <- rpart(Apps ~ ., data = train2, 
+                control = list(cp = 0.0001, maxdepth = 20, minbucket = 5))
+
+tree_3P <- prune.rpart(tree_2, 
+                      cp = tree_2$cptable[which.min(tree_2$cptable[,"xerror"])])
+
+#Plot the pruned tree
+prp(tree_3P)
+```
+
+
+#### Prediction Model 3-2 All feature
+
+```{r}
+pred_tree  <- predict(tree_3P, test)
+
+## Absolute error mean, median, sd, max, min
+abs_err_tree <- abs(pred_tree - test$Apps)
+models_comp  <- rbind(models_comp, "TreeReg_model7" = c(rmse(test$Apps, pred_tree), 
+                                                 mean(abs_err_tree),
+                                                 median(abs_err_tree),
+                                                 sd(abs_err_tree),
+                                                 IQR(abs_err_tree),
+                                                 range(abs_err_tree)))
+
+## Actual vs. Predicted
+plot(test$Apps, pred_tree, main = 'TreeReg_model7',
+     xlim = c(0, 2000), ylim = c(0, 2000),
+     xlab = "Actual", ylab = "Prediction")
+abline(a = 0, b = 1, col = "red", lwd = 2)
+```
+
+**Note:** we can see Actual vs Prediction this way, because we use tree methods. <br>
+**Note:** Mean absolute error and RMSE are increased to **707.19** and **1361.64**, respectively. In this way we are going to use more complex trees.  
+
+### Model 4 Baggin and Random forest
+
+Because we have seen we need some more complex models we are going to use **Baggin** and **Random forest**, however, I have already done RF ar the first in draft for getting more knowledge about feature selection. But I have mote mentioned in this Markdown. 
+
+#### Model 4-1 Bagging
+```{r}
+bagging <- randomForest(Apps ~ . , mtry = ncol(train) - 2, ntree = 500, data = train2)
+bagging
+```
+
+**Note:** it is figured that accuracy of **Baggin** is 92 percent. 
+
+#### Prediction Model 4-1 Bagging
+```{r}
+## Absolute error mean, median, sd, max, min
+pred_bagging  <- predict(bagging, test)
+abs_err_bagging <- abs(pred_bagging - test$Apps)
+models_comp <- rbind(models_comp, "Bagging_model8" = c(rmse(test$Apps, pred_bagging), 
+                                                 mean(abs_err_bagging),
+                                                 median(abs_err_bagging),
+                                                 sd(abs_err_bagging),
+                                                 IQR(abs_err_bagging),
+                                                 range(abs_err_bagging)))
+
+## Actual vs. Predicted
+plot(test$Apps, pred_bagging, main = 'Bagging_model8',
+     xlim = c(0, 2000), ylim = c(0, 2000),
+     xlab = "Actual", ylab = "Prediction")
+abline(a = 0, b = 1, col = "red", lwd = 2)
+```
+
+**Note:** This plot shows us the left part of test are improved rather than previous models. Moreover, **RMSE** is **896.19** and **Mean Absolute Error** is **458.09**. So, we can say until now this is the Best model we made. So, we will take a look at **RF**. 
+
+#### Model 4-2 random Forest
+```{r}
+## mtry	
+#     for regression = p/3
+rf_1 <- randomForest(Apps ~ . , data = train, 
+                     mtry = 6, ntree = 500, nodesize = 5, importance = TRUE)
+
+rf_1
+```
+
+**Note:** The RF has a decent accuracy. 
+**Note:** Invisibly, the importance of the variables that is plotted in the following.In this plot we can see **Accept**, **Enroll** and **F.Undergrad** are highest importance, and Books, S.F.Ratio does not have that much importance. <br>
+
+```{r}
+varImpPlot(rf_1)
+```
+
+####  Model 4-3 random Forest with CV
+In this model we are going to use cross validation to find the best value of hyperparameters.
+
+```{r}
+rf_cv <- rfcv(train[, - c(2)], 
+              train$Apps, 
+              cv.fold = 10,
+              step = 0.75,
+              mtry = function(p) max(1, floor(sqrt(p))), 
+              recursive = FALSE)
+str(rf_cv)
+
+```
+
+From **feature selection** with RF:
+
+```{r}
+## Regression formula
+reg_formula <- as.formula(Apps ~ Accept  + Enroll + F.Undergrad + Top10perc + 
+                            Room.Board  + Grad.Rate + Top25perc + Outstate + 
+                            Expend + Private + perc.alumni + Terminal + PhD + 
+                            P.Undergrad ) 
+
+rf_2 <- randomForest(reg_formula, data = train2, mtry = 3, ntree = 500, nodesize = 5)
+rf_2
+```
+
+**Note:** Accuracy as improved around **9%**, so we can say, model is improved. 
+
+####  Prediction Model 4-3 random Forest with CV
+
+```{r}
+pred_rf  <- predict(rf_2, test)
+
+abs_err_rf <- abs(pred_rf - test$Apps)
+models_comp <- rbind(models_comp, "RandomForest_model9" = c(rmse(test$Apps, pred_rf), 
+                                                      mean(abs_err_rf),
+                                                     median(abs_err_rf),
+                                                     sd(abs_err_rf),
+                                                     IQR(abs_err_rf),
+                                                     range(abs_err_rf)))
+
+plot(test$Apps, pred_rf, main = 'RandomForest_model9',
+     xlim = c(0, 2000), ylim = c(0, 2000),
+     xlab = "Actual", ylab = "Prediction")
+abline(a = 0, b = 1, col = "red", lwd = 2)
+
+```
+
+
+```{r}
+knitr::kable(
+  models_comp , caption = 'Comparing models.'
+)
+```
+
+**Note:** It is obvious **Bagging** and **RF** are better performance than other linear and simple decision tree. However,  **Bagging** has lower **Mean absolute error** than **RF**. But Generally, both model are good for deploying on the real condition. 
+
+
+
+
+```{r}
+##load("case1_testPreproces.R")
+train2$Private <- factor(train2$Private)
+test$Private <- factor(test$Private)
+```
+
+### Model 5 GB Regression
+
+we have made Tinning for Creating hyper-parameter grid, Two times hyper-parameter are trying to find. At first attempt, I just found a range and second attempt I focused on that range more. I have changed it to comment for increasing the speed. 
+
+#### Model 5-1 GB hyper-parameter
+```{r}
+# par_grid <- expand.grid(shrinkage = c(0.01, 0.15, 0.1, 0.3),  #learning rate
+#                         interaction_depth = c(1,2 ,3, 5), #the maximum depth of each tree
+#                         n_minobsinnode = c(5, 10, 15, 20),  #the minimum number of observations in the terminal nodes of the trees
+#                         bag_fraction = c(0.5, 0.7, 0.8,0.9) #stochastic gradient :bag.fraction < 1
+# )
+# 
+# 
+# ## Grid search (train/validation approach)
+# for(i in 1:nrow(par_grid)) {
+#   set.seed(123)
+#   #train model
+#   gbm_tune <- gbm(formula =  Apps ~ + .,
+#                   distribution = "gaussian",
+#                   data = train2,
+#                   n.trees = 5000,
+#                   interaction.depth = par_grid$interaction_depth[i],
+#                   shrinkage = par_grid$shrinkage[i],
+#                   n.minobsinnode = par_grid$n_minobsinnode[i],
+#                   bag.fraction = par_grid$bag_fraction[i],
+#                   train.fraction = 0.8,
+#                   #cv.folds = 5,
+#                   n.cores = NULL, #will use all cores by default
+#                   verbose = FALSE)  
+#   #add min training error and trees to grid
+#   par_grid$optimal_trees[i] <- which.min(gbm_tune$valid.error)
+#   par_grid$min_RMSE[i]      <- sqrt(min(gbm_tune$valid.error))
+# }
+# # 
+# head(par_grid)
+```
+
+#### Model 5-2 GB hyper-parameter
+
+I try to focused on the previous ranges, more. 
+
+```{r}
+# par_grid2 <- expand.grid(shrinkage = c(0.01, 0.15, 0.1, 0.3),  #learning rate
+#                         interaction_depth = c(2,3), #the maximum depth of each tree
+#                         n_minobsinnode = c(5) , #the minimum number of observations in the terminal nodes of the trees
+#                         bag_fraction = c(0.6, 0.7,0.8, 0.9)
+#                         )
+# ## Grid search (train/validation approach)
+# for(i in 1:nrow(par_grid2)) {
+#   set.seed(123)
+#   #train model
+#   gbm_tune <- gbm(formula = Apps ~ + .,
+#                   distribution = "gaussian",
+#                   data = train2,
+#                   n.trees = 5000,
+#                   interaction.depth = par_grid2$interaction_depth[i],
+#                   shrinkage = par_grid2$shrinkage[i],
+#                   n.minobsinnode = par_grid2$n_minobsinnode[i],
+#                   bag.fraction = par_grid2$bag_fraction[i],
+#                   train.fraction = 0.8,
+#                   cv.folds = 0,
+#                   n.cores = NULL, #will use all cores by default
+#                   verbose = FALSE)  
+#   #add min training error and trees to grid
+#   par_grid2$optimal_trees[i] <- which.min(gbm_tune$valid.error)
+#   par_grid2$min_RMSE[i]    <- sqrt(min(gbm_tune$valid.error))
+# }
+
+```
+
+#### Model 5-3 GB final
+
+I have found the best hyper-parameter values in draft files from above codes and I copy and paste them here.<br>
+
+
+```{r}
+gbmFinal <- gbm(formula = Apps  ~ . ,
+             distribution = "gaussian",
+             data = train2,
+             n.trees = 1622,
+             interaction.depth = 2,
+             shrinkage =0.01,
+             n.minobsinnode = 5,
+             bag.fraction = 0.6,
+             train.fraction = 1,
+             cv.folds = 0,
+             n.cores = NULL, #will use all cores by default
+)  
+
+summary(gbmFinal)
+```
+
+#### Prediction Model 5-3 GB final
+
+```{r}
+pred_gbm <- predict(gbmFinal, n.trees = 1622, newdata = test)
+## Absolute error mean, median, sd, max, min
+abs_err_gbm <- abs(pred_gbm - test$Apps)
+models_comp <- rbind(models_comp, "GBReg_model10" = c(rmse(test$Apps, pred_gbm), 
+                                              mean(abs_err_gbm),
+                                              median(abs_err_gbm),
+                                              sd(abs_err_gbm),
+                                              IQR(abs_err_gbm),
+                                              range(abs_err_gbm)))
+## Actual vs. Predicted
+plot(test$Apps, pred_gbm, main = 'GBReg_model10',
+     xlim = c(0, 2000), ylim = c(0, 2000),
+     xlab = "Actual", ylab = "Prediction")
+abline(a = 0, b = 1, col = "red", lwd = 2)
+```
+
+**Note:** From this plot and Error comparing we can figure out that GB has better performance, and **RMSE** is **718.55** and **Mean Absolute error** is **428.94**. So, we will contiune this process. <br>
+
+### Model 5 XGB 
+#### Model 5-1 XGB Tuning and validation
+
+At first I tried to Tune the hyper-parameter with this method. I turned it to comment, for increasing the speed of Knitting. 
+
+```{r}
+# x <- model.matrix(Apps ~ . , data = train2)[, -1] #remove intercept
+# y <- train2$Apps
+# set.seed(1234)
+# train_cases <- sample(1:nrow(train2), nrow(train2) * 0.8)
+# ## Train data set
+# train_xgboost <- train[train_cases,]
+# dim(train_xgboost)
+# ## Model Matrix
+# xtrain <- model.matrix(Apps ~ . , data = train_xgboost)[, -1] #remove intercept
+# ytrain <- train_xgboost$Apps
+# ## Validation data set
+# validation_xgboost  <- train[- train_cases,]
+# dim(validation_xgboost)
+# xvalidation <- model.matrix(Apps ~ . , data = validation_xgboost)[, -1] #remove intercept
+# yvalidation <- validation_xgboost$Apps
+# 
+# 
+# par_grid <- expand.grid(eta = c(0.01, 0.05, 0.1, 0.3),
+#                         lambda = c(0, 1, 2, 5),
+#                         max_depth = c(1, 3, 5, 7),
+#                         subsample = c(0.65, 0.8, 1), 
+#                         colsample_bytree = c(0.8, 0.9, 1))
+# 
+# 
+# #Grid search 
+# for(i in 1:nrow(par_grid)) {
+#   set.seed(123)
+#   
+#   #train model
+#   xgb_tune <- xgboost(data =  xtrain,
+#                       label = ytrain,
+#                       eta = par_grid$eta[i],
+#                       max_depth = par_grid$max_depth[i],
+#                       subsample = par_grid$subsample[i],
+#                       colsample_bytree = par_grid$colsample_bytree[i],
+#                       nrounds = 1000,
+#                       objective = "reg:squarederror",  #for regression models
+#                       verbose = 0,                     #silent,
+#                       early_stopping_rounds = 10       #stop if no improvement for 10 consecutive trees
+#   )
+#   
+#   #prediction on validation data set
+#   pred_xgb_validation <- predict(xgb_tune, xvalidation)
+#   rmse <- sqrt(mean((yvalidation - pred_xgb_validation) ^ 2))
+#   
+#   #add validation error
+#   par_grid$RMSE[i]  <- rmse
+# }
+# 
+# ## save(par_gridLog, file = "par_grid_xgboost.R")
+```
+
+So, from selected hyper-parameter I make the final XGB.
+
+#### Model 5-2 XGB Final
+
+```{r}
+set.seed(123)
+xgb <- xgboost(data = x, 
+                 label = y,
+                 eta = 0.1,     #learning rate
+                 max_depth = 3,  #tree depth 
+                 lambda = 0,
+                 nround = 1000,
+                 colsample_bytree = 0.9,
+                 subsample = 0.65,                #percent of training data to sample for each tree
+                 objective = "reg:squarederror",  #for regression models
+                 verbose = 0,                      #silent
+                 early_stopping_rounds = 10
+)
+```
+
+#### Prediction Model 5-2 XGB Final 
+
+```{r}
+x_test   <- model.matrix(Apps ~ . , data = test)[, -1]#remove intercept
+pred_xgb <- predict(xgb, x_test)
+
+## Absolute error mean, median, sd, max, min
+abs_err_xgb <- abs(pred_xgb - test$Apps)
+models_comp <- rbind(models_comp, "XGBReg_model11" = c(rmse(test$Apps, pred_xgb),
+                                               mean(abs_err_xgb),
+                                               median(abs_err_xgb),
+                                               sd(abs_err_xgb),
+                                               IQR(abs_err_xgb),
+                                               range(abs_err_xgb)))
+## Actual vs. Predicted
+plot(test$Apps, pred_xgb, main = 'XGBReg_model11',
+     xlim = c(0, 2000), ylim = c(0, 2000),
+     xlab = "Actual", ylab = "Prediction")
+abline(a = 0, b = 1, col = "red", lwd = 2)
+
+```
+
+
+# Compare the test errors and evalution of models  
+## 1. The proposed models are evaluated on experimental data using common indicators in machine learning.
+
+```{r}
+knitr::kable(
+  models_comp , caption = 'Comparing models.'
+)
+```
+
+**Based on Comparing Error:** Based on Compare table above, it figures that **XGB** has the lowest **Mean Absolute Error** and **GB** has the loest **RMSE**. Therefore, we can say these two models they have good out put and high accuser with lowest possible error. However, **Bagging** and **RF** are located in the next position for having the highest accuracy and lowest error after **XGB** and **GB**.However, if we do not have access to sufficient computer power, we can use those two insted of **XGB** and **GB**. 
+
+
+
+```{r cars-plot, dev='png'}
+plot(test$Apps, pred_mAll, main = 'LM_AllFeature_model1',
+     xlim = c(0, 2000), ylim = c(0, 2000),
+     xlab = "Actual", ylab = "Prediction")
+abline(a = 0, b = 1, col = "red", lwd = 2)
+
+
+plot(test$Apps, pred_mTtest, main = 'LM_Ttest_model2',
+     xlim = c(0, 2000), ylim = c(0, 2000),
+     xlab = "Actual", ylab = "Prediction")
+abline(a = 0, b = 1, col = "red", lwd = 2) 
+
+
+plot(test$Apps, pred_bestsubAdj, main = 'BestSubset_RAdj_model3',
+     xlim = c(0, 2000), ylim = c(0, 2000),
+     xlab = "Actual", ylab = "Prediction")
+abline(a = 0, b = 1, col = "red", lwd = 2)
+
+
+
+plot(test$Apps, pred_bestsub_cv, main = 'BestSubset_CV_model4',
+     xlim = c(0, 2000), ylim = c(0, 2000),
+     xlab = "Actual", ylab = "Prediction")
+abline(a = 0, b = 1, col = "red", lwd = 2)
+
+
+
+plot(test$Apps, pred_ridgereg, main = 'RidgeReg_model5',
+     xlim = c(0, 2000), ylim = c(0, 2000),
+     xlab = "Actual", ylab = "Prediction")
+
+abline(a = 0, b = 1, col = "red", lwd = 2)
+
+plot(test$Apps, pred_lassoreg, main = 'LASSOReg_model6',
+     xlim = c(0, 2000), ylim = c(0, 2000),
+     xlab = "Actual", ylab = "Prediction")
+abline(a = 0, b = 1, col = "red", lwd = 2)
+
+plot(test$Apps, pred_tree, main = 'TreeReg_model7',
+     xlim = c(0, 2000), ylim = c(0, 2000),
+     xlab = "Actual", ylab = "Prediction")
+abline(a = 0, b = 1, col = "red", lwd = 2)
+
+plot(test$Apps, pred_bagging, main = 'Bagging_model8',
+     xlim = c(0, 2000), ylim = c(0, 2000),
+     xlab = "Actual", ylab = "Prediction")
+abline(a = 0, b = 1, col = "red", lwd = 2)
+
+plot(test$Apps, pred_rf, main = 'RandomForest_model9',
+     xlim = c(0, 2000), ylim = c(0, 2000),
+     xlab = "Actual", ylab = "Prediction")
+abline(a = 0, b = 1, col = "red", lwd = 2)
+
+plot(test$Apps, pred_gbm, main = 'GBReg_model10',
+     xlim = c(0, 2000), ylim = c(0, 2000),
+     xlab = "Actual", ylab = "Prediction")
+abline(a = 0, b = 1, col = "red", lwd = 2)
+
+plot(test$Apps, pred_xgb, main = 'XGBReg_model11',
+     xlim = c(0, 2000), ylim = c(0, 2000),
+     xlab = "Actual", ylab = "Prediction")
+abline(a = 0, b = 1, col = "red", lwd = 2)
+```
+
+
+**Based on Comparing Residual Error:**  in the above figures, it is clear that *XGBReg_model11*,*GBReg_model10* ,*RandomForest_model9*, and *Bagging_model8* have highest accuracy than other model. <br>
+Also, if we need to have high accuracy I highly recommend to use **Bagging** and **RF**, but for a condition we do not have a decent computation system we can use **Bagging** and **RF**. <br>
+
+## 2. What suggestions do you have for testing the results in a real environment?
+We can use survey methods, to collect some new data from recent years, because these data were collected in 1995, and after 27 years, we can see the error of these models on the new data. However, we can compare it to some other old data, which is so much closer to 1995 than right now. For instance, I think this model will have high accuracy in **schools around 1996-2000** in the US.<br>
+
+
+# Deploy model
+
+Now if you want to develop such an algorithm on an industrial scale, think about what challenges you will face and what solutions you have for it.<br>
+
+## 1. Examine the challenges of algorithm development
+Maybe another important feature has not been reported in dataset. Also, some other feature do not play an important role in this study. <br>
+
+## 2. What solutions do you have to solve them?
+Comparing this data with new dataset. And we can see this model would work or not. 
+
+## 3. What requirements do you need to provide those solutions?
+having access to an API for taking new data and comparing this data with this dataset. 
+
+
+# Conclusion
+
+## 1. What you have leared from this study?
+Using Machine learning methods to study the Number of Application for college in US. <br>
+In this study, I have found out how I can find a decent algorithm with changing hyper parameter and different models<br>
+The most important thing I have learned, it was data understanding and knowing the feature, because using the difference algoritm and code, would a repeated task and without knowing data and data understating, data would not tell us anythings. So, I think understating the data concept is most important thing I have learned. <br>
+However, story telling is located in the high priority too. 
+
+## 2. What challenges did you face? How did you solve them?
+data visualization and showing them in the best way has some challenges which I have found out them on the Internet. <br>
+Another challenge I have face, was data understanding and the concept and definition of some this data, which I have search them in the Internet and I have tried to find the concept of the feature. Because we are not familiar to US curriculum. 
+
+```{r}
+knitr::knit_exit()
+```
+
+
+```{r}
+save(data, dataRaw, train, train2, test, models_comp, file = "finalMoldel.R")
+```
+
+
+```{r}
+View(models_comp)
+```
+
+
+
+

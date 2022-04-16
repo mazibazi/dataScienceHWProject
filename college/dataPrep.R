@@ -1,17 +1,20 @@
-setwd("D:/PhD/Data Science/dataScienceHWProject/college")
+setwd("D:/PhD/DataScience/dataScienceHWProject/college")
 getwd()
 
 library("moments")  #Moments, skewness, kurtosis and related tests 
 library("MASS")     #Box-Cox Transformations for Linear Models
 library("leaps")    #Regression Subset Selection
 library("corrplot") #Visualization of Correlation Matrix
+library("carData")
 library("car")
 library("corrplot")
 library("glmnet")
 library("randomForest")
 library("leaps")
 library("rpart")          #Classification and Regression Trees 
-library("rpart.plot") 
+library("rpart.plot")
+library("Metrics")
+
 dataRaw<- read.csv("college.csv", header = TRUE)
 
 ## Data Description and Reprocessing ------
@@ -221,7 +224,8 @@ pred_mAll <- predict(mAllRemoved, test)
 abs_err_lm <- abs(pred_mAll - test$Apps)
 
 #Create a dataframe to save prediction results on test data set
-models_comp <- data.frame("Mean of AbsErrors"   = mean(abs_err_lm),
+models_comp <- data.frame("RMSE"   =rmse(test$Apps, pred_mAll),
+                          "Mean of AbsErrors"   = mean(abs_err_lm),
                           "Median of AbsErrors" = median(abs_err_lm),
                           "SD of AbsErrors"  = sd(abs_err_lm),
                           "IQR of AbsErrors" = IQR(abs_err_lm),
@@ -229,6 +233,7 @@ models_comp <- data.frame("Mean of AbsErrors"   = mean(abs_err_lm),
                           "Max of AbsErrors" = max(abs_err_lm), 
                           row.names = 'LM_AllFeature')
 View(models_comp)
+
 
 #Actual vs. Predicted
 plot(test$Apps, pred_mAll, main = 'LM_AllFeature',
@@ -381,7 +386,6 @@ models_comp <- rbind(models_comp, 'BestSubset_RAdj' = c(mean(abs_err_bestsub),
                                                          sd(abs_err_bestsub),
                                                          IQR(abs_err_bestsub),
                                                          range(abs_err_bestsub)))
-View(models_comp)
 
 #Actual vs. Predicted
 plot(test$Apps, pred_bestsubAdj, main = 'BestSubset_RAdj',
